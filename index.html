@@ -1,0 +1,91 @@
+"use client";
+
+import { useState, useMemo } from "react";
+
+const money = (n) => "$" + Math.round(n || 0).toLocaleString();
+
+const pmt = (r, n, pv) =>
+  r === 0
+    ? pv / n
+    : (pv * r * Math.pow(1 + r, n)) /
+      (Math.pow(1 + r, n) - 1);
+
+export default function Page() {
+  const [p, setP] = useState({
+    price: 800000,
+    down: 25,
+    rate: 7,
+    term: 30,
+    rent1: 2200,
+    rent2: 2000,
+    tax: 8500,
+    ins: 2400,
+  });
+
+  const set = (k) => (e) =>
+    setP({ ...p, [k]: parseFloat(e.target.value || 0) });
+
+  const calc = useMemo(() => {
+    const loan = p.price * (1 - p.down / 100);
+    const payment = pmt(p.rate / 100 / 12, p.term * 12, loan);
+
+    const rent = (p.rent1 + p.rent2) * 12;
+
+    const noi = rent - p.tax - p.ins;
+    const cashFlow = noi - payment * 12;
+
+    const coc =
+      cashFlow / (p.price * (p.down / 100)) * 100;
+
+    return { payment, noi, cashFlow, coc };
+  }, [p]);
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-8">
+      <div className="max-w-4xl mx-auto">
+
+        <h1 className="text-3xl font-bold mb-6">
+          🏘 Investor Dashboard
+        </h1>
+
+        {/* INPUTS */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <input className="p-2 border"
+            placeholder="Price"
+            value={p.price}
+            onChange={set("price")}
+          />
+          <input className="p-2 border"
+            placeholder="Down %"
+            value={p.down}
+            onChange={set("down")}
+          />
+          <input className="p-2 border"
+            placeholder="Rate %"
+            value={p.rate}
+            onChange={set("rate")}
+          />
+          <input className="p-2 border"
+            placeholder="Rent 1"
+            value={p.rent1}
+            onChange={set("rent1")}
+          />
+          <input className="p-2 border"
+            placeholder="Rent 2"
+            value={p.rent2}
+            onChange={set("rent2")}
+          />
+        </div>
+
+        {/* OUTPUT */}
+        <div className="bg-white p-6 rounded-xl shadow space-y-2">
+          <div>Monthly Payment: {money(calc.payment)}</div>
+          <div>NOI: {money(calc.noi)}</div>
+          <div>Cash Flow: {money(calc.cashFlow)}</div>
+          <div>CoC Return: {calc.coc.toFixed(2)}%</div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
